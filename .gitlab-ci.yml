@@ -1,0 +1,41 @@
+default:
+  image: node:latest
+  services:
+    - name: mysql:latest
+      alias: mysql
+      command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--port=3306", "--lower_case_table_names=1", "--skip-ssl"]
+      variables:
+        MYSQL_ROOT_PASSWORD: "root"
+        MYSQL_DATABASE: "test"
+      ports:
+        - "3306:3306"
+
+variables:
+  MYSQL_DATABASE: "test"
+  MYSQL_ROOT_PASSWORD: "root"
+  NPM_REGISTRY: "https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/"
+
+stages:
+  - db-setup
+  - test
+
+# db-setup:
+#   stage: db-setup
+#   before_script:
+#     - apt-get update -y -qq
+#     - apt-get install -y -qq --no-install-recommends default-mysql-client
+#   script:
+#     - echo "DB SETUP:"
+#     - mysql --version
+#     - echo "Waiting for MySQL to start..."
+#     - while ! mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host=mysql --execute "SELECT 1" >/dev/null; do sleep 1; done
+#     - echo "MySQL is ready!"
+#     - mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host=mysql --execute "DROP DATABASE $MYSQL_DATABASE; CREATE DATABASE $MYSQL_DATABASE;"
+
+test:
+  stage: test
+  script:
+    - npm install
+    - echo "$MYSQL_ROOT_PASSWORD"
+    - echo "$MYSQL_DATABASE"
+    - npm run test --file users.service.spec.ts
